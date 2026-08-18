@@ -11,6 +11,7 @@ const resetBtn = document.getElementById('resetBtn');
 const copyBtn = document.getElementById('copyBtn');
 const downloadBtn = document.getElementById('downloadBtn');
 const apiStatus = document.getElementById('apiStatus');
+const apiKeyInput = document.getElementById('apiKey');
 
 let outputText = '';
 let outputFormat = 'json';
@@ -81,14 +82,20 @@ form.addEventListener('submit', async (event) => {
   const format = document.getElementById('format').value;
   const chunkSize = document.getElementById('chunkSize').value;
   const overlap = document.getElementById('overlap').value;
+  const apiKey = apiKeyInput.value.trim();
   const formData = new FormData();
   formData.append('file', file);
 
   try {
     const params = new URLSearchParams({ format, chunkSize, overlap });
+    const headers = {};
+    if (apiKey) headers.Authorization = `Bearer ${apiKey}`;
+
     const response = await fetch(`/api/files/upload?${params.toString()}`, {
       method: 'POST',
-      body: formData
+      headers,
+      body: formData,
+      cache: 'no-store'
     });
 
     const body = await response.text();
@@ -150,7 +157,7 @@ downloadBtn.addEventListener('click', () => {
   URL.revokeObjectURL(url);
 });
 
-fetch('/health')
+fetch('/health', { cache: 'no-store' })
   .then((response) => {
     if (!response.ok) throw new Error('Health check failed');
     return response.json();
