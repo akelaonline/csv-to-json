@@ -5,29 +5,52 @@ on:
     branches: [main]
     paths:
       - package.json
-      - docs/RELEASE_NOTES_v2.0.0.md
+      - docs/RELEASE_NOTES_v*.md
       - .github/workflows/release.yml
 
 permissions:
   contents: write
 
 jobs:
-  release-v2:
+  release:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
-      - name: Create v2.0.0 release if missing
-        env:
-          GH_TOKEN: ${{ github.token }}
+      - name: Resolve release metadata
+        id: release
+        shell: bash
         run: |
-          if gh release view v2.0.0 >/dev/null 2>&1; then
-            echo "v2.0.0 already exists"
-            exit 0
+          VERSION="$(node -p "require('./package.json').version")"
+          TAG="v${VERSION}"
+          NOTES_FILE="docs/RELEASE_NOTES_${TAG}.md"
+
+          if [[ ! -f "${NOTES_FILE}" ]]; then
+            echo "Missing release notes: ${NOTES_FILE}" >&2
+            exit 1
           fi
 
-          gh release create v2.0.0 \
-            --target "${GITHUB_SHA}" \
-            --title "AI Data Prep Converter v2.0.0" \
-            --notes-file docs/RELEASE_NOTES_v2.0.0.md
+          echo "version=${VERSION}" >> "${GITHUB_OUTPUT}"
+          echo "tag=${TAG}" >> "${GITHUB_OUTPUT}"
+          echo "notes_file=${NOTES_FILE}" >> "${GITHUB_OUTPUT}"
+
+      - name: Create or synchronize GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.release.outputs.tag }}
+          VERSION: ${{ steps.release.outputs.version }}
+          NOTES_FILE: ${{ steps.release.outputs.notes_file }}
+        run: |
+          if gh release view "${TAG}" >/dev/null 2>&1; then
+            gh release edit "${TAG}" \
+              --title "AI Data Prep Converter ${TAG}" \
+              --notes-file "${NOTES_FILE}" \
+              --latest
+          else
+            gh release create "${TAG}" \
+              --target "${GITHUB_SHA}" \
+              --title "AI Data Prep Converter ${TAG}" \
+              --notes-file "${NOTES_FILE}" \
+              --latest
+          fi
