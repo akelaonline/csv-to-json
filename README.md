@@ -214,7 +214,7 @@ Example:
 {
   "status": "ok",
   "service": "ai-data-prep-converter",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "uptimeSeconds": 42
 }
 ```

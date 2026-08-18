@@ -1,6 +1,6 @@
 {
   "name": "ai-data-prep-converter",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "private": true,
   "description": "Self-hosted converter for turning XLSX, XLS, CSV, PDF and TXT files into secure JSON/JSONL datasets for RAG, AI agents and LLM pipelines.",
   "main": "index.js",
