@@ -1,4 +1,5 @@
 const path = require('node:path');
+const crypto = require('node:crypto');
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -56,7 +57,45 @@ const apiLimiter = rateLimit({
   message: { error: 'Too many requests. Please try again later.' }
 });
 
+function constantTimeEqual(left, right) {
+  const leftBuffer = Buffer.from(String(left || ''));
+  const rightBuffer = Buffer.from(String(right || ''));
+
+  if (leftBuffer.length !== rightBuffer.length) return false;
+  if (leftBuffer.length === 0) return false;
+
+  return crypto.timingSafeEqual(leftBuffer, rightBuffer);
+}
+
+function getRequestApiKey(req) {
+  const directKey = req.get('x-api-key');
+  if (directKey) return directKey.trim();
+
+  const authorization = req.get('authorization') || '';
+  const match = authorization.match(/^Bearer\s+(.+)$/i);
+  return match ? match[1].trim() : '';
+}
+
+function apiKeyGuard(req, res, next) {
+  const expectedKey = String(process.env.API_KEY || '').trim();
+  if (!expectedKey) return next();
+
+  const providedKey = getRequestApiKey(req);
+  if (!constantTimeEqual(providedKey, expectedKey)) {
+    res.set('WWW-Authenticate', 'Bearer realm="ai-data-prep-converter"');
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  return next();
+}
+
+app.use('/api', (req, res, next) => {
+  res.set('Cache-Control', 'no-store');
+  res.set('Pragma', 'no-cache');
+  next();
+});
 app.use('/api', apiLimiter);
+app.use('/api', apiKeyGuard);
 app.use('/api/files', fileRoutes);
 
 app.use('/api', (req, res) => {
@@ -94,6 +133,10 @@ function startServer() {
   const port = Number(process.env.PORT || 3001);
   const server = app.listen(port, () => {
     console.log(`AI Data Prep Converter v${packageJson.version} listening on port ${port}`);
+
+    if (process.env.NODE_ENV === 'production' && !String(process.env.API_KEY || '').trim()) {
+      console.warn('WARNING: API_KEY is not configured. Protect public deployments with an API key or trusted upstream authentication.');
+    }
   });
 
   server.requestTimeout = Number(process.env.REQUEST_TIMEOUT_MS || 30000);
@@ -107,4 +150,4 @@ if (require.main === module) {
   startServer();
 }
 
-module.exports = { app, startServer };
+module.exports = { app, startServer, constantTimeEqual, getRequestApiKey };
