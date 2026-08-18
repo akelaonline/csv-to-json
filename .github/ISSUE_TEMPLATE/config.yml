@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/akelaonline/csv-to-json/security
+    about: Do not disclose exploitable security issues in public issues. See SECURITY.md for reporting instructions.
+  - name: Maintainer profile
+    url: https://github.com/akelaonline
+    about: Alejandro Daniel José · Akela
