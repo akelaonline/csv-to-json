@@ -4,6 +4,7 @@ on:
   push:
     branches: [main]
   pull_request:
+    branches: [main]
 
 permissions:
   contents: read
@@ -17,15 +18,38 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
+          cache: npm
+
       - name: Install dependencies
-        run: npm install --ignore-scripts=false
+        run: npm ci --ignore-scripts=false
+
       - name: Syntax check
         run: npm run check
+
       - name: Unit and integration tests
         run: npm test
+
       - name: Production dependency audit
         run: npm audit --omit=dev --audit-level=high
+
+      - name: Verify Docker build and runtime
+        if: matrix.node-version == 24
+        run: |
+          docker build -t ai-data-prep-converter:test .
+          docker run -d --name ai-data-prep-converter-test -p 3001:3001 ai-data-prep-converter:test
+          trap 'docker rm -f ai-data-prep-converter-test >/dev/null 2>&1 || true' EXIT
+
+          for attempt in $(seq 1 20); do
+            if curl --fail --silent --show-error http://127.0.0.1:3001/health; then
+              exit 0
+            fi
+            sleep 1
+          done
+
+          docker logs ai-data-prep-converter-test
+          exit 1
