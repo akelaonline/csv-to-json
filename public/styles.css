@@ -121,6 +121,23 @@ h1 {
   color: var(--text);
 }
 .options input:focus, .options select:focus { border-color: var(--accent); }
+.api-key-option { grid-column: 1 / -1; }
+.optional {
+  margin-left: 5px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+.field-help {
+  display: block;
+  margin-top: 7px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.45;
+}
 
 .actions { display: flex; gap: 10px; margin-top: 18px; }
 .actions.compact { margin-top: 0; }
@@ -164,6 +181,7 @@ pre {
 footer {
   display: flex;
   justify-content: space-between;
+  gap: 16px;
   padding: 14px 4px;
   color: var(--muted);
   font-size: 13px;
@@ -174,5 +192,7 @@ footer a { color: var(--muted); }
   .shell { padding-top: 42px; }
   .panel-heading { flex-direction: column; }
   .options { grid-template-columns: 1fr; }
+  .api-key-option { grid-column: auto; }
   .actions { flex-wrap: wrap; }
+  footer { flex-direction: column; }
 }
