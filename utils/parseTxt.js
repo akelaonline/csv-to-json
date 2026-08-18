@@ -1,40 +1,20 @@
-const fs = require('fs').promises;
+const fs = require('node:fs/promises');
+const chunkText = require('./chunkText');
 
-module.exports = async function parseTxt(filePath) {
-  try {
-    const data = await fs.readFile(filePath, 'utf8');
-    
-    // Split the content into chunks of approximately 1000 characters
-    // trying to break at natural boundaries (periods)
-    const chunks = [];
-    let currentChunk = '';
-    const sentences = data.split(/(?<=\.)\s+/);
-    
-    for (const sentence of sentences) {
-      if ((currentChunk + sentence).length > 1000) {
-        if (currentChunk) {
-          chunks.push(currentChunk.trim());
-        }
-        currentChunk = sentence;
-      } else {
-        currentChunk += (currentChunk ? ' ' : '') + sentence;
-      }
-    }
-    
-    if (currentChunk) {
-      chunks.push(currentChunk.trim());
-    }
+module.exports = async function parseTxt(filePath, options = {}) {
+  const data = await fs.readFile(filePath, 'utf8');
+  const chunks = chunkText(data, {
+    chunkSize: options.chunkSize || 1200,
+    overlap: options.overlap ?? 120
+  });
 
-    return chunks.map((chunk, index) => ({
-      text: chunk,
-      metadata: {
-        sourceType: 'txt',
-        chunkIndex: index,
-        totalChunks: chunks.length,
-        characterCount: chunk.length
-      }
-    }));
-  } catch (error) {
-    throw new Error(`Error parsing TXT file: ${error.message}`);
-  }
+  return chunks.map((chunk, index) => ({
+    text: chunk,
+    metadata: {
+      sourceType: 'txt',
+      chunkIndex: index,
+      totalChunks: chunks.length,
+      characterCount: chunk.length
+    }
+  }));
 };

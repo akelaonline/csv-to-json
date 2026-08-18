@@ -1,46 +1,41 @@
-const fs = require('fs');
-const pdf = require('pdf-parse');
+const fs = require('node:fs/promises');
+const { PDFParse } = require('pdf-parse');
+const chunkText = require('./chunkText');
 
-module.exports = async function parsePdf(filePath) {
+module.exports = async function parsePdf(filePath, options = {}) {
+  const buffer = await fs.readFile(filePath);
+  const parser = new PDFParse({ data: new Uint8Array(buffer) });
+
   try {
-    const dataBuffer = fs.readFileSync(filePath);
-    const data = await pdf(dataBuffer);
-    
-    // Split the content into chunks of approximately 1000 characters
-    // trying to break at natural boundaries (paragraphs or sentences)
-    const text = data.text.replace(/\n+/g, ' ').trim();
-    const chunks = [];
-    let currentChunk = '';
-    const paragraphs = text.split(/(?<=\.)\s+/);
-    
-    for (const paragraph of paragraphs) {
-      if ((currentChunk + paragraph).length > 1000) {
-        if (currentChunk) {
-          chunks.push(currentChunk.trim());
-        }
-        currentChunk = paragraph;
-      } else {
-        currentChunk += (currentChunk ? ' ' : '') + paragraph;
-      }
-    }
-    
-    if (currentChunk) {
-      chunks.push(currentChunk.trim());
-    }
+    const [textResult, infoResult] = await Promise.all([
+      parser.getText(),
+      parser.getInfo()
+    ]);
+
+    const text = String(textResult.text || '').trim();
+    const chunks = chunkText(text, {
+      chunkSize: options.chunkSize || 1200,
+      overlap: options.overlap ?? 120
+    });
 
     return chunks.map((chunk, index) => ({
       text: chunk,
       metadata: {
         sourceType: 'pdf',
-        pageCount: data.numpages,
+        pageCount: infoResult.total || null,
         chunkIndex: index,
         totalChunks: chunks.length,
-        author: data.info?.Author || 'Unknown',
-        title: data.info?.Title || 'Untitled',
+        author: infoResult.infoData?.Author || null,
+        title: infoResult.infoData?.Title || null,
         characterCount: chunk.length
       }
     }));
   } catch (error) {
-    throw new Error(`Error parsing PDF file: ${error.message}`);
+    throw Object.assign(new Error(`Error parsing PDF file: ${error.message}`), {
+      status: 422,
+      code: 'PDF_PARSE_ERROR'
+    });
+  } finally {
+    await parser.destroy().catch(() => {});
   }
 };

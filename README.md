@@ -1,235 +1,203 @@
-# 🚀 File to OpenAI-Compatible JSON Converter
+# AI Data Prep Converter
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Node.js Version](https://img.shields.io/badge/node-%3E%3D%2014.0.0-brightgreen.svg)](https://nodejs.org/)
-[![Express Version](https://img.shields.io/badge/express-%5E4.18.2-blue.svg)](https://expressjs.com/)
+[![CI](https://github.com/akelaonline/csv-to-json/actions/workflows/ci.yml/badge.svg)](https://github.com/akelaonline/csv-to-json/actions/workflows/ci.yml)
+[![Node.js](https://img.shields.io/badge/Node.js-%3E%3D22.3-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-A powerful and user-friendly web application that converts various file formats (Excel, CSV, PDF, TXT) into JSON format compatible with OpenAI's knowledge base structure. Perfect for preparing training data or creating custom knowledge bases for AI applications.
+A compact web service for converting **XLSX, XLS, CSV, PDF and TXT** files into clean **JSON or JSONL** records for RAG pipelines, AI agents, vector databases, automation and general LLM data preparation.
 
-![Application Screenshot](https://via.placeholder.com/800x400.png?text=File+to+JSON+Converter)
+> v2 removes the old claim that the output is a special "OpenAI-compatible JSON" format. The default schema is intentionally generic and portable. For OpenAI File Search, use the current vector-store/file APIs; for fine-tuning, transform data into the JSONL message schema required by the target model.
 
-## ✨ Features
+## v2 highlights
 
-- 📊 **Multiple Format Support**
-  - Excel (.xlsx, .xls)
-  - CSV files
-  - PDF documents
-  - Text files (.txt)
+- Replaced vulnerable npm-registry `xlsx@0.18.5` with SheetJS CE `0.20.3` from the authoritative SheetJS CDN.
+- Preserved legacy `.xls` support and added multi-sheet processing.
+- Upgraded Multer to 2.2.0 and modernized the server stack.
+- Added extension/MIME checks plus file-content signature validation.
+- Guaranteed temporary-file deletion on success and failure.
+- Added Helmet headers, rate limiting, timeouts and opt-in CORS.
+- Added configurable chunking with overlap for PDF/TXT.
+- Added JSONL output, `/health`, tests, CI and a security policy.
+- Rebuilt the frontend with drag-and-drop and no third-party frontend assets.
 
-- 🎯 **Smart Conversion**
-  - Intelligent text chunking for large documents
-  - Maintains document structure
-  - Preserves metadata
-  - Generates unique document IDs
+## Supported input
 
-- 💅 **Modern UI/UX**
-  - Clean, responsive design
-  - Real-time file information
-  - Progress feedback
-  - Error handling with clear messages
+| Format | Extension | Processing |
+|---|---|---|
+| Modern Excel workbook | `.xlsx` | Every worksheet, first row as headers |
+| Legacy Excel workbook | `.xls` | Every worksheet, first row as headers |
+| CSV | `.csv` | Streaming parser, one record per row |
+| PDF | `.pdf` | Text extraction + configurable chunking |
+| Plain text | `.txt` | Configurable chunking |
 
-- 🛠 **Developer Friendly**
-  - Well-structured codebase
-  - Modular architecture
-  - Easy to extend
-  - Comprehensive documentation
+## Output schema
 
-## 🚦 Prerequisites
+JSON output is an array of portable records:
 
-Before you begin, ensure you have the following installed:
-- [Node.js](https://nodejs.org/) (version 14.0.0 or higher)
-- npm (usually comes with Node.js)
-
-## 🔧 Installation
-
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/akelaonline/csv-to-json.git
-   cd csv-to-json
-   ```
-
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
-
-3. **Start the server**
-   ```bash
-   npm start
-   ```
-
-4. **Access the application**
-   Open your browser and navigate to:
-   ```
-   http://localhost:3001
-   ```
-
-## 💡 Usage
-
-### Web Interface
-
-1. Click the "Choose File" button to select your file
-2. Select any supported file (Excel, CSV, PDF, or TXT)
-3. Click "Convert to JSON" to process the file
-4. View the converted JSON in the result area
-5. Use the "Download JSON" button to save the result
-
-### API Endpoints
-
-#### POST /api/files/upload
-Upload and convert a file to JSON format.
-
-**Request:**
-- Method: POST
-- Content-Type: multipart/form-data
-- Body: 
-  - file: Your file (Excel, CSV, PDF, or TXT)
-
-**Response:**
 ```json
 [
   {
-    "id": "doc_0",
-    "text": "Extracted content from the file",
+    "id": "doc_000001",
+    "text": "name: Ada Lovelace, role: Mathematician",
     "metadata": {
-      "sourceType": "excel|csv|pdf|txt",
-      "filename": "original_filename.ext",
-      "uploadDate": "2025-02-15T19:17:53.000Z",
-      // Additional metadata specific to file type
+      "sourceType": "csv",
+      "rowNumber": 1,
+      "totalRows": 10,
+      "columnCount": 2,
+      "filename": "people.csv",
+      "uploadDate": "2026-08-18T17:00:00.000Z",
+      "sizeBytes": 2048
     }
   }
 ]
 ```
 
-## 📋 Output Format
+JSONL returns the same objects, one JSON object per line.
 
-The converter generates JSON in the following structure:
+## Quick start
+
+Requirements: Node.js **22.3+**. Node 24 is recommended for new deployments.
+
+```bash
+git clone https://github.com/akelaonline/csv-to-json.git
+cd csv-to-json
+npm install
+npm test
+npm start
+```
+
+Open `http://localhost:3001`.
+
+The upload directory is created automatically. You do not need to create it manually.
+
+## API
+
+### `POST /api/files/upload`
+
+Send `multipart/form-data` with one field named `file`.
+
+Optional query parameters:
+
+| Parameter | Default | Range | Description |
+|---|---:|---:|---|
+| `format` | `json` | `json` / `jsonl` | Response format |
+| `chunkSize` | `1200` | 400–8000 | Maximum characters per PDF/TXT chunk |
+| `overlap` | `120` | 0–1500 and `< chunkSize` | Approximate overlap between adjacent chunks |
+
+Example:
+
+```bash
+curl -F "file=@document.pdf" \
+  "http://localhost:3001/api/files/upload?format=jsonl&chunkSize=1600&overlap=160"
+```
+
+### `GET /health`
+
+Returns service status, version and uptime.
 
 ```json
-[
-  {
-    "id": "doc_0",
-    "text": "Content chunk 1",
-    "metadata": {
-      "sourceType": "excel",
-      "filename": "example.xlsx",
-      "uploadDate": "2025-02-15T19:17:53.000Z",
-      "sheetName": "Sheet1",
-      "rowCount": 100,
-      "columnCount": 5
-    }
-  },
-  {
-    "id": "doc_1",
-    "text": "Content chunk 2",
-    "metadata": {
-      // Metadata varies by file type
-    }
-  }
-]
+{
+  "status": "ok",
+  "service": "ai-data-prep-converter",
+  "version": "2.0.0",
+  "uptimeSeconds": 42
+}
 ```
 
-### Metadata by File Type
+## Security defaults
 
-#### Excel (.xlsx, .xls)
-- sourceType: "excel"
-- sheetName: Name of the worksheet
-- rowCount: Number of rows
-- columnCount: Number of columns
+The service treats uploads as **untrusted input**. Current controls include:
 
-#### CSV
-- sourceType: "csv"
-- rowCount: Number of rows
-- columnCount: Number of columns
-- rowNumber: Position in original file
+- 10 MB default upload limit.
+- One uploaded file per request.
+- Extension and MIME allowlists.
+- PDF, XLSX and XLS signature checks; binary-data rejection for TXT/CSV samples.
+- Cryptographically random temporary filenames.
+- Temporary-file deletion in a `finally` block.
+- Maximum CSV/XLS/XLSX row counts and spreadsheet sheet count.
+- Helmet security headers.
+- API rate limiting: 30 requests per IP per 15 minutes by default.
+- CORS disabled unless `CORS_ORIGIN` is explicitly configured.
+- Server request/header/keep-alive timeouts.
+- Generic production responses for internal server errors.
 
-#### PDF
-- sourceType: "pdf"
-- pageCount: Total pages
-- author: Document author (if available)
-- title: Document title (if available)
-- chunkIndex: Position in chunked content
-- totalChunks: Total number of chunks
+Document parsing still carries residual risk. Run the process as a non-root user, keep dependencies patched, and isolate the service when exposing it to arbitrary public uploads.
 
-#### TXT
-- sourceType: "txt"
-- chunkIndex: Position in chunked content
-- totalChunks: Total number of chunks
-- characterCount: Length of chunk
+See [SECURITY.md](SECURITY.md) for vulnerability reporting.
 
-## 🔍 Technical Details
+## Configuration
 
-### Architecture
+The app reads deployment environment variables directly; a dotenv package is not required. `.env.example` documents the supported settings.
 
-```
-├── index.js           # Application entry point
-├── routes/           
-│   └── fileRoutes.js  # Route definitions
-├── controllers/      
-│   └── fileController.js  # Request handling logic
-├── utils/            
-│   ├── parseExcel.js  # Excel file parser
-│   ├── parseCsv.js    # CSV file parser
-│   ├── parsePdf.js    # PDF file parser
-│   └── parseTxt.js    # Text file parser
-└── public/           
-    └── index.html     # Web interface
+```text
+PORT=3001
+MAX_FILE_SIZE_BYTES=10485760
+RATE_LIMIT_MAX=30
+CORS_ORIGIN=https://your-app.example
+TRUST_PROXY=true
+MAX_CSV_ROWS=50000
+MAX_XLSX_ROWS=50000
+MAX_XLSX_SHEETS=25
 ```
 
-### Key Dependencies
+`CORS_ORIGIN` accepts a comma-separated allowlist. Leave it empty for same-origin browser use. Only set `TRUST_PROXY=true` when the service actually sits behind a trusted reverse proxy.
 
-- **express**: Web application framework
-- **multer**: File upload handling
-- **xlsx**: Excel file parsing
-- **csv-parser**: CSV file parsing
-- **pdf-parse**: PDF file parsing
+## Architecture
 
-## 🛡️ Security Considerations
+```text
+.
+├── index.js
+├── controllers/
+│   └── fileController.js
+├── routes/
+│   └── fileRoutes.js
+├── utils/
+│   ├── chunkText.js
+│   ├── parseCsv.js
+│   ├── parseExcel.js
+│   ├── parsePdf.js
+│   ├── parseTxt.js
+│   └── validateFile.js
+├── public/
+│   ├── index.html
+│   ├── styles.css
+│   └── app.js
+├── test/
+├── scripts/
+└── .github/workflows/ci.yml
+```
 
-- File size limit: 5MB
-- Supported file types only
-- Temporary file cleanup
-- Error handling for malformed files
-- No system file access outside upload directory
+## Development and validation
 
-## 🔄 Contributing
+```bash
+npm install
+npm run check
+npm test
+npm audit --omit=dev --audit-level=high
+```
 
-We welcome contributions! Please follow these steps:
+`npm run dev` uses Node's native watch mode; Nodemon is no longer required.
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+## Deployment notes
 
-## 📝 License
+- Mount the temporary upload path on ephemeral storage where possible.
+- Put TLS and request-body limits at the reverse proxy/load balancer too.
+- Do not enable broad CORS unless there is a concrete cross-origin client requirement.
+- For high-volume/public workloads, move document parsing to isolated workers or a queue instead of keeping expensive parsing in the web process.
+- The in-memory rate limiter is suitable for a single process. Use a shared store when scaling horizontally.
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+## Dependency note
 
-## 🤝 Support
+SheetJS Community Edition publishes current Node packages through its own authoritative CDN rather than the npm registry. This project intentionally pins `xlsx` to the SheetJS CE 0.20.3 tarball URL documented by SheetJS.
 
-Need help? Have questions? Here's how to get support:
+The old v1 `package-lock.json` was removed because it described the vulnerable/obsolete dependency graph. CI installs the pinned top-level dependencies, runs tests, and performs a production dependency audit on every pull request.
 
-- Create an [Issue](https://github.com/akelaonline/csv-to-json/issues)
-- Email: [your-email@example.com]
-- Documentation: [Wiki](https://github.com/akelaonline/csv-to-json/wiki)
+## License
 
-## 🌟 Acknowledgments
+MIT — see [LICENSE](LICENSE).
 
-- Thanks to all contributors
-- Inspired by OpenAI's knowledge base format
-- Built with modern web technologies
+## Maintainer
 
-## 📈 Roadmap
+Built and maintained by **Alejandro D. José** — [@akelaonline](https://github.com/akelaonline).
 
-- [ ] Add support for more file formats
-- [ ] Implement batch processing
-- [ ] Add custom chunking options
-- [ ] Create API authentication
-- [ ] Add file compression support
-- [ ] Implement real-time conversion progress
-- [ ] Add custom metadata fields
-
----
-
-Made with ❤️ by [Your Name/Team]
+Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md).
