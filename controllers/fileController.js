@@ -20,10 +20,17 @@ function httpError(status, message, code) {
 
 function parseInteger(value, fallback, min, max, name) {
   if (value === undefined) return fallback;
-  const parsed = Number.parseInt(value, 10);
-  if (!Number.isFinite(parsed) || parsed < min || parsed > max) {
+
+  const raw = String(value).trim();
+  if (!/^\d+$/.test(raw)) {
+    throw httpError(400, `${name} must be an integer between ${min} and ${max}`, 'INVALID_OPTION');
+  }
+
+  const parsed = Number(raw);
+  if (!Number.isSafeInteger(parsed) || parsed < min || parsed > max) {
     throw httpError(400, `${name} must be between ${min} and ${max}`, 'INVALID_OPTION');
   }
+
   return parsed;
 }
 
@@ -102,4 +109,10 @@ exports.handleFileUpload = async (req, res, next) => {
   } finally {
     await safeDelete(filePath);
   }
+};
+
+exports._private = {
+  parseInteger,
+  sanitizeFilename,
+  safeDelete
 };
