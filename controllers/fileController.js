@@ -110,9 +110,3 @@ exports.handleFileUpload = async (req, res, next) => {
     await safeDelete(filePath);
   }
 };
-
-exports._private = {
-  parseInteger,
-  sanitizeFilename,
-  safeDelete
-};
