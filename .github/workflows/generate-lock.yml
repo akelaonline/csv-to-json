@@ -1,0 +1,29 @@
+name: Generate lockfile
+
+on:
+  push:
+    branches:
+      - agent/repo-branding-release
+
+permissions:
+  contents: read
+
+jobs:
+  lockfile:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - name: Generate package-lock.json
+        run: npm install --package-lock-only --ignore-scripts=false
+      - name: Upload lockfile artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: package-lock
+          path: package-lock.json
+          if-no-files-found: error
