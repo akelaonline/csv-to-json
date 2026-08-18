@@ -1,5 +1,26 @@
 # Changelog
 
+## 2.0.1 - 2026-08-18
+
+### Security
+- Added optional service-level API authentication with `Authorization: Bearer` or `X-API-Key` when `API_KEY` is configured.
+- API responses now send `Cache-Control: no-store` and `Pragma: no-cache`.
+- API-key comparison uses constant-time comparison for equal-length secrets.
+- Production startup warns when no API key is configured.
+- Malformed numeric upload options are now rejected strictly instead of being partially accepted by `parseInt`.
+
+### Quality
+- Expanded integration tests for API authentication, cache policy and strict option validation.
+- Updated GitHub Actions to `actions/checkout@v7`, `actions/setup-node@v7` and `github/codeql-action@v4`.
+- Corrected contribution requirements to Node.js 22.3+ / Node 24 recommended.
+- Expanded package metadata and discovery keywords; marked the application private to prevent accidental npm publication.
+- Generalized release automation so releases follow the version in `package.json` and synchronize matching release notes.
+
+### Documentation
+- Rebuilt the README around the final Akela public-project standard.
+- Replaced the aspirational roadmap with explicit current scope and known limitations.
+- Separated open-source issue/security channels from professional implementation and consulting services.
+
 ## 2.0.0 - 2026-08-18
 
 ### Security

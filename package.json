@@ -1,7 +1,8 @@
 {
   "name": "ai-data-prep-converter",
-  "version": "2.0.0",
-  "description": "Securely convert XLSX, XLS, CSV, PDF and TXT files into JSON or JSONL for RAG, agents and LLM data pipelines.",
+  "version": "2.0.1",
+  "private": true,
+  "description": "Self-hosted converter for turning XLSX, XLS, CSV, PDF and TXT files into secure JSON/JSONL datasets for RAG, AI agents and LLM pipelines.",
   "main": "index.js",
   "type": "commonjs",
   "scripts": {
@@ -15,15 +16,36 @@
   },
   "keywords": [
     "rag",
+    "llm",
+    "ai-agents",
+    "data-preparation",
+    "document-processing",
+    "etl",
+    "json",
     "jsonl",
     "csv",
     "xlsx",
     "xls",
     "pdf",
-    "llm",
-    "openai",
-    "data-prep"
+    "vector-database",
+    "knowledge-base",
+    "nodejs",
+    "express",
+    "docker",
+    "self-hosted",
+    "n8n",
+    "automation",
+    "openai"
   ],
+  "author": "Alejandro Daniel José · Akela",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/akelaonline/csv-to-json.git"
+  },
+  "bugs": {
+    "url": "https://github.com/akelaonline/csv-to-json/issues"
+  },
+  "homepage": "https://github.com/akelaonline/csv-to-json#readme",
   "license": "MIT",
   "dependencies": {
     "cors": "2.8.6",

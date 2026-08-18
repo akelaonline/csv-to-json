@@ -3,14 +3,14 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Convert XLSX, XLS, CSV, PDF and TXT files into clean JSON or JSONL for RAG, agents and LLM pipelines.">
-  <title>AI Data Prep Converter</title>
+  <meta name="description" content="Self-hosted data preparation for AI: convert XLSX, XLS, CSV, PDF and TXT into clean JSON or JSONL for RAG, agents, vector databases and automation.">
+  <title>AI Data Prep Converter · Akela</title>
   <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
   <main class="shell">
     <header class="hero">
-      <span class="eyebrow">AI DATA PREP</span>
+      <span class="eyebrow">AKELA · OPEN SOURCE</span>
       <h1>Turn files into clean data for AI.</h1>
       <p>Convert XLSX, XLS, CSV, PDF and TXT into structured JSON or JSONL for RAG, agents, vector pipelines and automation.</p>
     </header>
@@ -19,7 +19,7 @@
       <div class="panel-heading">
         <div>
           <h2 id="upload-title">Convert a file</h2>
-          <p>Maximum upload size: 10 MB. Temporary files are deleted after processing.</p>
+          <p>Maximum upload size: 10 MB by default. Temporary files are deleted after processing.</p>
         </div>
         <span class="status" id="apiStatus">Checking API…</span>
       </div>
@@ -47,6 +47,11 @@
             Overlap
             <input id="overlap" name="overlap" type="number" value="120" min="0" max="1500" step="20">
           </label>
+          <label class="api-key-option">
+            API key <span class="optional">optional</span>
+            <input id="apiKey" name="apiKey" type="password" autocomplete="off" spellcheck="false" placeholder="Only if this server requires API_KEY">
+            <span class="field-help">Used only for this request and never stored by the browser UI.</span>
+          </label>
         </div>
 
         <div class="actions">
@@ -73,7 +78,7 @@
     </section>
 
     <footer>
-      <span>AI Data Prep Converter v2</span>
+      <span>Built by Alejandro Daniel José · Akela</span>
       <a href="https://github.com/akelaonline/csv-to-json" rel="noreferrer">GitHub</a>
     </footer>
   </main>
