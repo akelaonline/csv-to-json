@@ -4,13 +4,14 @@ const chunkText = require('./chunkText');
 
 module.exports = async function parsePdf(filePath, options = {}) {
   const buffer = await fs.readFile(filePath);
-  const parser = new PDFParse({ data: new Uint8Array(buffer) });
+  const parser = new PDFParse({ data: buffer });
 
   try {
-    const [textResult, infoResult] = await Promise.all([
-      parser.getText(),
-      parser.getInfo()
-    ]);
+    // pdf-parse may transfer ownership of typed-array data to its worker.
+    // Load/extract sequentially on the same parser instance instead of
+    // starting concurrent operations that can race over transferable data.
+    const textResult = await parser.getText();
+    const infoResult = await parser.getInfo();
 
     const text = String(textResult.text || '').trim();
     const chunks = chunkText(text, {
