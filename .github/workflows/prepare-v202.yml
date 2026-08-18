@@ -1,0 +1,48 @@
+name: Prepare v2.0.2 metadata
+
+on:
+  push:
+    branches:
+      - qa/parser-coverage
+
+permissions:
+  contents: write
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.ref_name }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      - name: Bump package and lock metadata
+        run: npm version 2.0.2 --no-git-tag-version
+
+      - name: Keep README example aligned with release
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('README.md')
+          text = path.read_text()
+          text = text.replace('"version": "2.0.1"', '"version": "2.0.2"')
+          path.write_text(text)
+          PY
+
+      - name: Commit generated metadata
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package.json package-lock.json README.md
+          if git diff --cached --quiet; then
+            echo "v2.0.2 metadata already prepared"
+          else
+            git commit -m "chore: prepare v2.0.2 metadata"
+            git push origin HEAD:${GITHUB_REF_NAME}
+          fi
