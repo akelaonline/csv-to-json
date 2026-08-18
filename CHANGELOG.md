@@ -1,5 +1,16 @@
 # Changelog
 
+## 2.0.2 - 2026-08-18
+
+### Fixed
+- Fixed valid PDF parsing when text extraction and metadata extraction were started concurrently on the same `pdf-parse` parser instance.
+- PDF text and metadata extraction now run sequentially, avoiding worker/transfer races around the PDF data buffer.
+- The parser now passes the Node.js `Buffer` directly to `PDFParse`, matching the documented Node usage.
+
+### Quality
+- Added an end-to-end valid-PDF smoke test with a generated minimal PDF fixture.
+- The PDF test verifies text extraction, page count, source metadata and chunk metadata on Node 22 and Node 24.
+
 ## 2.0.1 - 2026-08-18
 
 ### Security
