@@ -1,0 +1,58 @@
+name: Bug report
+description: Report a reproducible problem in AI Data Prep Converter
+title: "[Bug]: "
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug. Do not attach malicious files or disclose exploitable security issues here; use SECURITY.md instead.
+  - type: input
+    id: version
+    attributes:
+      label: Version / commit
+      placeholder: v2.0.0 or commit SHA
+    validations:
+      required: true
+  - type: dropdown
+    id: input-type
+    attributes:
+      label: Input format
+      options:
+        - XLSX
+        - XLS
+        - CSV
+        - PDF
+        - TXT
+        - API / server
+        - Frontend
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: Describe the problem and the result you expected.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Reproduction steps
+      placeholder: |
+        1. Start the service with...
+        2. Upload/call...
+        3. Observe...
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      placeholder: Node version, OS, Docker/native, relevant environment variables
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs
+      render: shell
